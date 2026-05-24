@@ -5,6 +5,8 @@
 ## 📌 핵심 요약
 - **기간**: 2024.03 ~ 2024.05 (네트워크 프로그래밍 팀 프로젝트)
 - **팀**: 3인 (김호정 · 양승원 · 본인)
+- **본인 담당**: 서버 측 멀티스레드 처리 전담 + 게임 로직 설계
+  → `LiarServer.java` (TCP accept 루프, 클라이언트별 스레드 생성, 게임 스레드 분리), `OneClientModul` (클라이언트 1명당 1 스레드 I/O), `GameManager.java` (라운드 진행, 주제·라이어 선정, 발언 순서·투표·결과 판정)
 - **기술 키워드**: Java, Swing GUI, TCP Socket, Multi-Threading, Gradle
 - **기획 문서**: [제안서 발표자료](./docs/proposal.pptx)
 
@@ -86,4 +88,9 @@ java -cp build/classes/java/main Client
 
 자세한 기획·역할 분담은 [`docs/proposal.pptx`](./docs/proposal.pptx) 참고.
 
-> 본인 담당 영역은 면접에서 코드 라인 단위로 설명 가능합니다.
+### 본인 담당 영역 (3인 팀 중 1인 담당)
+- **서버 인프라**: `LiarServer.java` — `ServerSocket` 기반 accept 루프, 접속 인원 상한 처리(최대 8명), 게임 진행을 별도 `gameThread`로 분리해 accept 블로킹 방지
+- **클라이언트별 스레드 모듈**: `OneClientModul` — 클라이언트 1명당 1 스레드, 메시지 프로토콜 분기(`liarTopic`/`cVote`/`gm` 접두사), 입퇴장·강퇴·브로드캐스트 처리
+- **게임 로직 설계**: `GameManager.java` — 주제 풀(181개) 로딩, 라이어 무작위 선정, 발언 순서 셔플·잠금·해제, 투표 집계, 라이어 승/패 판정 분기
+
+> 위 코드들은 면접에서 라인 단위로 설명 가능.

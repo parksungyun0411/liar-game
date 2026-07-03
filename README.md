@@ -1,96 +1,84 @@
-# Liar Game — Java 네트워크 멀티플레이어
+# Liar Game — Java 소켓 멀티플레이어
 
-> 8명까지 동시 접속 가능한 TCP 소켓 기반 실시간 멀티플레이어 라이어 게임. Java + Swing으로 클라이언트·서버 GUI를 직접 구현했습니다.
+> 최대 8명이 동시 접속하는 TCP 소켓 기반 멀티플레이어 라이어 게임.
+> 한 명(라이어)만 제시어를 모른 채 시작해, 대화로 라이어를 찾아내면 시민 승 — 지목된 라이어가 제시어를 맞히면 라이어 승.
 
-## 📌 핵심 요약
-- **기간**: 2024.03 ~ 2024.05 (네트워크 프로그래밍 팀 프로젝트)
-- **팀**: 3인 (김호정 · 양승원 · 본인)
-- **본인 담당**: 서버 측 멀티스레드 처리 전담 + 게임 로직 설계
-  → `LiarServer.java` (TCP accept 루프, 클라이언트별 스레드 생성, 게임 스레드 분리), `OneClientModul` (클라이언트 1명당 1 스레드 I/O), `GameManager.java` (라운드 진행, 주제·라이어 선정, 발언 순서·투표·결과 판정)
-- **기술 키워드**: Java, Swing GUI, TCP Socket, Multi-Threading, Gradle
-- **기획 문서**: [제안서 발표자료](./docs/proposal.pptx)
+![라이어 게임 타이틀 화면](./mainimage진진진짜.png)
 
-## 🎯 무엇을 만들었나
-보드게임 "라이어 게임"의 온라인 멀티플레이어 버전. 한 명만 "주제어"를 모르는 상태로 시작해서, 대화를 통해 라이어를 찾아내거나, 라이어가 들키지 않고 주제어를 맞히면 이기는 게임.
+## 핵심 요약
 
-**게임 흐름**:
-1. 서버 관리자가 게임 시작 (포트 지정, 최대 8명 수용)
-2. 181개 주제 풀에서 랜덤 주제 선정, 한 명을 라이어로 무작위 지정
-3. 플레이어들이 순서대로 10초씩 주제어를 한마디로 설명
-4. 전원 투표 후 최다 득표자가 라이어로 지목
-5. 라이어가 맞으면 → 라이어에게 10초 내 주제어 추리 기회
-6. 라이어가 주제어를 맞히면 라이어 승, 아니면 시민 승
+- **기간**: 2024.03 ~ 2024.05 (3-1 네트워크 프로그래밍 수업 팀 프로젝트)
+- **팀**: 3인 (김호정 · 양승원 · 박성윤)
+- **본인(박성윤) 담당**: 서버 측 멀티스레드 처리 전담 + 게임 로직 설계
+  — `LiarServer.java` / `OneClientModul` / `GameManager.java`
+- **기술**: Java, Swing, `Socket` / `ServerSocket`, `Thread` / `Vector`, Gradle
+- **기획 자료**: [제안서 발표자료](./docs/proposal.pptx)
 
-## 🏗 아키텍처
+## 게임 흐름
+
+1. 서버 관리자가 포트를 지정해 서버를 열고, 플레이어들이 닉네임·IP·포트로 입장 (최대 8명, 닉네임 중복 차단)
+2. 게임 시작 시 주제 풀(`주제.txt`, 181개)에서 랜덤 제시어 선정, 플레이어 중 1명을 라이어로 무작위 지정 — 라이어에게만 제시어를 숨김
+3. 무작위 순서로 1인당 10초씩 제시어를 한마디로 설명 (본인 차례에만 채팅 잠금 해제)
+4. 20초 투표 (전원 투표 완료 시 조기 마감) → 최다 득표자를 라이어로 지목
+5. 지목이 맞으면 라이어에게 10초 내 제시어 추리 기회 — 맞히면 라이어 승, 틀리면 시민 승. 지목이 틀리면 라이어 승
+
+## 아키텍처
 
 ```
-┌─────────────┐         TCP (port 3000)          ┌─────────────┐
-│  ClientUi   │ ◄──────────────────────────────► │ ServerUi    │
-│  (Swing)    │   DataInputStream / Output       │ (Swing)     │
-└──────┬──────┘                                  └──────┬──────┘
-       │                                                │
-       ▼                                                ▼
-   Client.java                                     LiarServer.java
-   (Runnable + ActionListener)                     (Thread, max 8 OCMs)
-                                                        │
-                                                        ▼
-                                                  GameManager
-                                                  (round logic,
-                                                   voting, result)
+            LoginUi.main() ── 단일 진입점
+           ┌──────┴──────┐
+   "서버 생성하기"       "서버 입장하기"
+           │                  │
+      ServerUi (Swing)   ClientUi (Swing)
+           │                  │
+      LiarServer          Client (Runnable, 수신 스레드)
+      ├ serverThread:         │
+      │  accept 루프          │ TCP (DataInput/OutputStream,
+      │  → 접속마다           │      writeUTF 텍스트 프로토콜)
+      │  OneClientModul ◄─────┘
+      │  스레드 생성 (최대 8)
+      └ gameThread: 시작 버튼 → GameManager 구동
 ```
 
-- **`LiarServer`**: `ServerSocket`으로 클라이언트 accept → 각 접속마다 `OneClientModul` 스레드 생성. 게임 시작 시 별도 `gameThread`로 `GameManager` 구동
-- **`OneClientModul`**: 클라이언트 1명당 1 스레드. 메시지 프로토콜 (`liarTopic`, `cVote`, `gm` 접두사 등)로 채팅·투표·게임 상태 분기
-- **`GameManager`**: 라운드 진행, 주제·라이어 선정, 발언 순서 잠금/해제, 투표 집계, 결과 판정
-- **`ClientUi` / `ServerUi` / `LoginUi` / `VoteDialog` / `Result`**: Swing 기반 GUI. 커스텀 컴포넌트 (`RoundedButton`, `ImagePanel`)로 시각 효과
+- **`LiarServer`**: `ServerSocket` accept 루프를 `serverThread`로 돌리고, 접속마다 `OneClientModul` 스레드를 생성해 `Vector`에 보관. 게임 시작 시 별도 `gameThread`에서 `GameManager`를 구동해 accept 루프와 게임 진행이 서로 블로킹되지 않도록 분리. 인원 상한(8명)·게임 중 입장 차단·강퇴 처리
+- **`OneClientModul`**: 클라이언트 1명당 1 스레드로 수신 대기. 메시지 접두사(`liarTopic` = 라이어의 제시어 추리, `cVote` = 투표, `gm` = 게임 명령, 그 외 = 채팅)로 분기하고 전체 브로드캐스트. 전원 투표 완료 시 `gameThread.interrupt()`로 대기 조기 해제
+- **`GameManager`**: 주제 로딩 → 라이어 무작위 선정 → 발언 순서 셔플과 채팅 잠금/해제 → 투표 집계(`Collections.frequency`) → 승패 판정. 진행 상황은 `gm` 접두사 명령으로 클라이언트 UI(투표 다이얼로그, 결과 화면)를 원격 제어
+- **`ClientUi` / `ServerUi` / `LoginUi` / `VoteDialog` / `Result`**: Swing GUI. 커스텀 `RoundedButton`, `ImagePanel`(배경 이미지 패널) 사용
 
-## 🔧 기술 스택
-- **언어**: Java
-- **GUI**: Swing (`JFrame`, `JDialog`, 커스텀 `JPanel`)
-- **네트워크**: `java.net.ServerSocket` / `Socket`, `DataInputStream` / `DataOutputStream`
-- **동시성**: `Thread`, `Vector` (스레드 안전 리스트), 멀티스레드 브로드캐스트
-- **빌드**: Gradle (Kotlin DSL, `build.gradle.kts`)
+## 실행 방법
 
-## 💡 기술적 의사결정
-- **WebSocket 대신 raw TCP**: 네트워크 프로그래밍 수업 맥락 — 소켓·스트림·프로토콜을 직접 다루는 학습 목적. 메시지 접두사 기반 간단한 텍스트 프로토콜로 채팅과 게임 명령을 한 채널에서 처리.
-- **각 클라이언트 1 스레드 모델**: 8명이 상한이라 스레드 풀 없이 처리 가능. 인원 늘리려면 NIO 또는 Netty 전환 필요.
-- **GameManager를 별도 스레드로 분리**: accept 루프(`serverThread`)와 게임 로직(`gameThread`)이 서로 블로킹되지 않도록 분리.
-
-## 📊 배운 점 / 한계
-- **TCP 소켓 + 멀티스레드 직접 경험**: 동시성·동기화·자원 정리를 처음 손으로 다뤄봄
-- **알게 된 한계**:
-  - 메시지 프로토콜이 텍스트 접두사 기반이라 확장성 약함 → 다시 한다면 JSON + protocol enum
-  - `synchronized` 부족 (`Vector` 의존) → 동시 입퇴장에서 ConcurrentModificationException 위험
-  - GUI 스레드와 네트워크 스레드 분리가 모호 → 실무라면 `SwingUtilities.invokeLater` 적극 사용
-  - 이미지·주제 파일을 작업 디렉토리에서 직접 읽음 → JAR 패키징 시 깨짐. classpath 로딩 필요
-
-## 🚀 실행 방법
+JDK 필요 (Gradle 8.4 wrapper 포함). 리소스(이미지, `주제.txt`)를 작업 디렉토리에서 읽으므로 **반드시 리포 루트에서 실행**해야 한다.
 
 ```bash
-# Gradle로 빌드
+# 빌드
 ./gradlew build
 
-# 서버 실행 (한 사람)
-java -cp build/classes/java/main LiarServer
-# → 포트 입력 후 "시작" 버튼
-
-# 클라이언트 실행 (각자)
-java -cp build/classes/java/main Client
-# → 서버 IP, 포트, 닉네임 입력
+# 실행 (macOS/Linux — Windows는 클래스패스 구분자를 ; 로)
+java -cp "build/classes/java/main:." LoginUi
 ```
 
-> ⚠️ `주제.txt`, 이미지 파일들이 작업 디렉토리에 있어야 정상 동작.
+- 실행 후 "서버 생성하기"로 한 명이 서버를 열고, 나머지는 "서버 입장하기"로 접속
+- `주제.txt`는 EUC-KR 인코딩인데 코드가 플랫폼 기본 문자셋으로 읽는다 — 한국어 Windows 기준으로 개발되어, 기본 문자셋이 UTF-8인 환경에서는 제시어가 깨질 수 있음
+- 일부 이미지 리소스(`pBack.png`, `buddy.jpg`)는 리포에 남아있지 않아 해당 패널이 비어 보일 수 있음
 
-## 👥 팀 구성
+## 팀 구성 · 역할
 
-3인 팀 협업 프로젝트 — 김호정, 양승원, 박성윤 (본인).
-원본 레포지토리는 [@kimhoojung/Network_11](https://github.com/kimhoojung/Network_11) (final branch). 본 레포는 동일 커밋 이력을 포트폴리오 목적으로 본 계정에 복제한 것이며, **개별 커밋 작성자 정보는 그대로 보존되어 있습니다**.
+3인 팀 프로젝트 — 김호정 · 양승원 · 박성윤.
+원본 저장소는 [@kimhoojung/Network_11](https://github.com/kimhoojung/Network_11) (final branch)이며, 본 리포는 포트폴리오 목적으로 복제한 것입니다. 개별 커밋 작성자 정보는 그대로 보존되어 있습니다.
 
-자세한 기획·역할 분담은 [`docs/proposal.pptx`](./docs/proposal.pptx) 참고.
+**본인(박성윤) 담당** — 서버 측 멀티스레드 처리 + 게임 로직:
 
-### 본인 담당 영역 (3인 팀 중 1인 담당)
-- **서버 인프라**: `LiarServer.java` — `ServerSocket` 기반 accept 루프, 접속 인원 상한 처리(최대 8명), 게임 진행을 별도 `gameThread`로 분리해 accept 블로킹 방지
-- **클라이언트별 스레드 모듈**: `OneClientModul` — 클라이언트 1명당 1 스레드, 메시지 프로토콜 분기(`liarTopic`/`cVote`/`gm` 접두사), 입퇴장·강퇴·브로드캐스트 처리
-- **게임 로직 설계**: `GameManager.java` — 주제 풀(181개) 로딩, 라이어 무작위 선정, 발언 순서 셔플·잠금·해제, 투표 집계, 라이어 승/패 판정 분기
+- `LiarServer.java`: accept 루프 스레드, 접속 인원 상한·게임 중 입장 차단, 게임 스레드 분리, 강퇴
+- `OneClientModul`: 클라이언트 1명당 1 스레드 수신, 접두사 기반 메시지 프로토콜 분기, 입퇴장·브로드캐스트, 닉네임 중복 검사
+- `GameManager.java`: 주제 풀 로딩, 라이어 선정, 발언 순서·채팅 잠금 제어, 투표 집계, 승패 판정
 
-> 위 코드들은 면접에서 라인 단위로 설명 가능.
+클라이언트 측 구현과 Swing UI·리소스 제작은 팀원들과 분담했습니다 (세부 분담은 기획 단계 자료인 `docs/proposal.pptx` 참고).
+
+## 배운 점 / 한계
+
+- **TCP 소켓 + 멀티스레드 직접 경험**: 스레드 생성·동기화·자원 정리를 프레임워크 없이 손으로 다뤄봄. 동시 접속 환경에서 강퇴·브로드캐스트 타이밍 버그를 디버깅한 것이 가장 기억에 남는 부분
+- **알게 된 한계**:
+  - 텍스트 접두사 기반 프로토콜은 확장에 취약 → 다시 한다면 JSON 등 구조화된 메시지 + 명령 enum
+  - 동기화가 `Vector`에 의존 → 게임 진행 중 입퇴장 시 순회-수정 경합 위험
+  - 네트워크 스레드에서 Swing 컴포넌트를 직접 갱신 → `SwingUtilities.invokeLater`로 EDT에 위임했어야 함
+  - 리소스를 작업 디렉토리 상대 경로로 로딩 → JAR 패키징 시 깨짐. classpath 리소스로 옮겨야 함

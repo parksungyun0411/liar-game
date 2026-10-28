@@ -238,9 +238,8 @@ class OneClientModul extends Thread {                                           
                     if (ls.voteList.size() == ls.v.size()) {
                         ls.gameThread.interrupt();
                     }
-                } else if (msg.equals("enterfalse")) {
-                } else {
-                    broadcast(chatId + ">> " + msg);
+                } else if (msg.startsWith("chat")) {
+                    broadcast(chatId + ">> " + msg.substring(4));
                 }
             }
         } catch (IOException ie) {

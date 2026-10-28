@@ -33,7 +33,7 @@ class Client implements Runnable, ActionListener {
         public void actionPerformed(ActionEvent e) {
             spkMsg = cui.chatTf.getText();
             spkMsg = spkMsg.trim();
-            speak(spkMsg);
+            speak("chat" + spkMsg);
             cui.chatTf.setText(null);
         }
     };
@@ -42,7 +42,7 @@ class Client implements Runnable, ActionListener {
         public void actionPerformed(ActionEvent e) {
             spkMsg = cui.chatTf.getText();
             spkMsg = spkMsg.trim();
-            speak(spkMsg);
+            speak("chat" + spkMsg);
             cui.chatTf.setText(null);
             cui.chatTf.setEnabled(false);
             cui.chatTf.removeActionListener(enter2);
@@ -53,7 +53,7 @@ class Client implements Runnable, ActionListener {
         public void actionPerformed(ActionEvent e) {
             spkMsg = cui.chatTf.getText();
             spkMsg = spkMsg.trim();
-            speak(spkMsg);
+            speak("chat" + spkMsg);
             speak("liarTopic" + spkMsg);
             cui.chatTf.setText(null);
             cui.chatTf.setEnabled(false);

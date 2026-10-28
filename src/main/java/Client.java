@@ -96,7 +96,7 @@ class Client implements Runnable, ActionListener {
                     dos.flush();
                     reLogin();
                 } else if (ent.equals("falsename")) {
-                    JOptionPane.showMessageDialog(null, "gm으로 시작하는 닉네임은 사용할 수 없습니다.", "닉네임 오류", 0);
+                    JOptionPane.showMessageDialog(null, "닉네임은 한글·영문·숫자 1~10자로 정해야 하고, gm으로 시작할 수 없습니다.", "닉네임 오류", 0);
                     dos.writeUTF("enterfalse");
                     dos.flush();
                     reLogin();
@@ -125,9 +125,9 @@ class Client implements Runnable, ActionListener {
 
     String protocol() throws IOException {
         if (lsnMsg.startsWith(id + ">>") & !lsnMsg.startsWith(id + " ")) {
-            lsnMsg = lsnMsg.replaceFirst(id, "나 ");
+            lsnMsg = "나 " + lsnMsg.substring(id.length());
             return lsnMsg;
-        } else if (lsnMsg.startsWith(id + "님이 강퇴")) {
+        } else if (lsnMsg.equals("gmkicked")) {
             s.close();
             JOptionPane.showMessageDialog(null, "관리자에 의해 강퇴당하셨습니다.", "강퇴", 0);
             cui.dispose();

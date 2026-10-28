@@ -20,6 +20,7 @@ class LiarServer extends Thread implements ActionListener {
     String msg;
     String liarTopic = "10초초과";
     ArrayList voteList = new ArrayList();
+    boolean voting;
 
     LiarServer(ServerUi sui) {
         try {
@@ -29,8 +30,14 @@ class LiarServer extends Thread implements ActionListener {
             ss = new ServerSocket(port);
             System.out.println(ss);
             sui.setTitle("ip: " + InetAddress.getLocalHost().getHostAddress() + ", port: " + port + " 서버관리자");
-        } catch (IOException e) {
+        } catch (IOException | IllegalArgumentException e) {
             e.printStackTrace();
+        }
+        if (ss == null) {
+            JOptionPane.showMessageDialog(null, portN + "번 포트로 서버를 열 수 없습니다. 이미 사용 중인 포트인지 확인해주세요.", "서버 생성 오류", 0);
+            sui.dispose();
+            sui.ui.reopen();
+            return;
         }
         serverThread = new Thread(this);
         serverThread.start();
@@ -235,10 +242,13 @@ class OneClientModul extends Thread {                                           
                         ls.liarTopic = msg.substring(9);
                     }
                 } else if (msg.startsWith("cVote")) {
-                    msg = msg.substring(5);
-                    ls.voteList.add(msg);
-                    if (ls.voteList.size() == ls.v.size()) {
-                        ls.gameThread.interrupt();
+                    synchronized (ls) {
+                        if (ls.voting) {
+                            ls.voteList.add(msg.substring(5));
+                            if (ls.voteList.size() == ls.v.size()) {
+                                ls.gameThread.interrupt();
+                            }
+                        }
                     }
                 } else if (msg.startsWith("chat")) {
                     broadcast(chatId + ">> " + msg.substring(4));

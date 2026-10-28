@@ -209,7 +209,7 @@ class LoginDialog extends JDialog implements ActionListener, KeyListener { //   
         if (e.getSource().equals(okBtn) & title.equals("서버 생성하기")) {
             ui.port = portTf.getText().trim();
             Boolean chk = check();
-            if (chk = true) {
+            if (chk == true) {
                 dispose();
                 frame.dispose();
                 new ServerUi(ui);

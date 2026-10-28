@@ -106,6 +106,7 @@ class LiarServer extends Thread implements ActionListener {
                     ocm.broadcast("1초후 게임을 시작합니다.");
                     sleep(1000);
                     voteList = new ArrayList();
+                    liarTopic = "10초초과";
                     System.out.println("겜메");
                     new GameManager(this);
                 }

@@ -44,8 +44,9 @@ class LiarServer extends Thread implements ActionListener {
         String banId = String.valueOf(sui.idBox.getSelectedItem());
         for (OneClientModul ocm : v) {
             if (ocm.chatId.equals(banId)) {
-                ocm.broadcast(ocm.chatId + "님이 강퇴당했습니다..");
+                ocm.send("gmkicked");
                 v.remove(ocm);
+                ocm.broadcast(ocm.chatId + "님이 강퇴당했습니다..");
                 ocm.closeAll();
                 break;
             }
@@ -205,7 +206,7 @@ class OneClientModul extends Thread {                                           
                     dos.writeUTF("falseid");
                     System.out.println("falseid");
                     closeAll();
-                } else if (enterId.startsWith("gm")) {
+                } else if (!enterId.matches("[가-힣A-Za-z0-9]{1,10}") || enterId.startsWith("gm")) {
                     dos.writeUTF("falsename");
                     closeAll();
                 } else {

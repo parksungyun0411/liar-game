@@ -12,7 +12,6 @@
 - **본인(박성윤) 담당**: 서버 측 멀티스레드 처리 전담 + 게임 로직 설계
   — `LiarServer.java` / `OneClientModul` / `GameManager.java`
 - **기술**: Java, Swing, `Socket` / `ServerSocket`, `Thread` / `Vector`, Gradle
-- **기획 자료**: [제안서 발표자료](./docs/proposal.pptx)
 
 ## 게임 흐름
 
@@ -72,7 +71,7 @@ java -cp "build/classes/java/main:." LoginUi
 - `OneClientModul`: 클라이언트 1명당 1 스레드 수신, 접두사 기반 메시지 프로토콜 분기, 입퇴장·브로드캐스트, 닉네임 중복 검사
 - `GameManager.java`: 주제 풀 로딩, 라이어 선정, 발언 순서·채팅 잠금 제어, 투표 집계, 승패 판정
 
-클라이언트 측 구현과 Swing UI·리소스 제작은 팀원들과 분담했습니다 (세부 분담은 기획 단계 자료인 `docs/proposal.pptx` 참고).
+클라이언트 측 구현과 Swing UI·리소스 제작은 팀원들과 분담했습니다.
 
 ## 배운 점 / 한계
 

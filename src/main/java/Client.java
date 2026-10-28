@@ -95,6 +95,11 @@ class Client implements Runnable, ActionListener {
                     dos.writeUTF("enterfalse");
                     dos.flush();
                     reLogin();
+                } else if (ent.equals("falsename")) {
+                    JOptionPane.showMessageDialog(null, "gm으로 시작하는 닉네임은 사용할 수 없습니다.", "닉네임 오류", 0);
+                    dos.writeUTF("enterfalse");
+                    dos.flush();
+                    reLogin();
                 } else if (ent.equals("3초후")) {
                     System.out.println("enterfalse");
                     JOptionPane.showMessageDialog(null, "해당 서버의 게임이 시작되었습니다.", "게임 시작", 0);
@@ -129,13 +134,10 @@ class Client implements Runnable, ActionListener {
             ui.reopen();
             return "exit";
         } else if (lsnMsg.startsWith("gm")) {
-            System.out.println(lsnMsg + "gm메세지");
             lsnMsg = lsnMsg.substring(2);
-            System.out.println(lsnMsg);
             fromGm(lsnMsg);
             return null;
         }   else {
-            System.out.println(lsnMsg);
             return lsnMsg;
         }
     }
@@ -151,16 +153,11 @@ class Client implements Runnable, ActionListener {
 
         if (lsnMsg.startsWith("liar:")) {
             cui.setTitle(id + "(으)로 게임중..(ip: " + ip + ", port: " + port + ")");
-            if (lsnMsg.substring(5).equals(id)) {
-                cui.topicTf.setFont(new Font("맑은 고딕", Font.BOLD, 16));
-                cui.topicTf.setText("당신은 라이어입니다");
-            } else {
-            }
+            cui.topicTf.setFont(new Font("맑은 고딕", Font.BOLD, 16));
+            cui.topicTf.setText("당신은 라이어입니다");
         } else if (lsnMsg.startsWith("topic:")) {
-            if (cui.topicTf.getText().equals("당신은 라이어입니다")) {
-            } else {
-                cui.topicTf.setText(lsnMsg.substring(6));
-            }
+            cui.setTitle(id + "(으)로 게임중..(ip: " + ip + ", port: " + port + ")");
+            cui.topicTf.setText(lsnMsg.substring(6));
         } else if (lsnMsg.startsWith("채팅락")) {
             cui.chatTf.setEnabled(false);
         } else if (lsnMsg.startsWith("채팅언락")) {
@@ -231,16 +228,8 @@ class Client implements Runnable, ActionListener {
 
     void speak(String str) {
         try {
-            if (str.startsWith("liar")) {
-                dos.writeUTF(str);
-                dos.flush();
-            } else if (str.startsWith("cVote")) {
-                dos.writeUTF(str);
-                dos.flush();
-            } else {
-                dos.writeUTF(id + ">> " + str);
-                dos.flush();
-            }
+            dos.writeUTF(str);
+            dos.flush();
         } catch (IOException ie) {
             System.out.println("speak() ie: " + ie);
         }
@@ -278,7 +267,6 @@ class Client implements Runnable, ActionListener {
         lsnMsg = "";
         try {
             lsnMsg = dis.readUTF();
-            System.out.println(lsnMsg);
             return protocol();
         } catch (IOException ie) {
             System.out.println(ie);

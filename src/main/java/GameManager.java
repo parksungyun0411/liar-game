@@ -23,11 +23,12 @@ public class GameManager {
         }
         setTopic();
         setLair();
-        System.out.println(liar);
-        System.out.println(topic);
         for (OneClientModul ocm : ls.v) {
-            gm("liar:" + liar);
-            gm("topic:" + topic);
+            if (ocm.chatId.equals(liar)) {
+                ocm.send("gmliar:" + liar);
+            } else {
+                ocm.send("gmtopic:" + topic);
+            }
         }
         oneChat();
         vote();
@@ -131,7 +132,6 @@ public class GameManager {
             ls.sleepTh(10);
             String liarTopic;
             liarTopic = ls.liarTopic;
-            System.out.println(liarTopic);
             if (liarTopic.equals(topic)) {
                 System.out.println("라이어승리");
                 ls.ocm.broadcast("라이어승리");
@@ -142,7 +142,7 @@ public class GameManager {
                 result("resultliarLose");
 
             } else {
-                ls.ocm.broadcast("라이어가 제시어를 맞히지 못햇습니다." +
+                ls.ocm.broadcast("라이어가 제시어를 맞히지 못했습니다." +
                         "\n라이어 패배");
                 ls.ocm.broadcast(" 제시어 : " + topic + "\n라이어가 입력한 제시어 : " + liarTopic);
                 result("resultliarLose");

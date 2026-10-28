@@ -19,7 +19,7 @@ class LiarServer extends Thread implements ActionListener {
     ServerUi sui;
     String msg;
     String liarTopic = "10초초과";
-    ArrayList voteList;
+    ArrayList voteList = new ArrayList();
 
     LiarServer(ServerUi sui) {
         try {
@@ -61,17 +61,20 @@ class LiarServer extends Thread implements ActionListener {
                     OutputStream os = s.getOutputStream();
                     DataOutputStream dos = new DataOutputStream(os);
                     if (v.size() == 8) {
-                        dos.writeUTF("false");
+                        dos.writeUTF("falsefull");
                     } else if (gameThread.isAlive() == true) {
                         dos.writeUTF("true");
                         dos.writeUTF("3초후");
                         System.out.println("enterfalse");
                     } else if (v.size() < 8) {
                         dos.writeUTF("true");
-                        ocm = new OneClientModul(this);
-                        sui.idBox.addItem(ocm.chatId);
-                        v.add(ocm);
-                        ocm.start();
+                        OneClientModul newOcm = new OneClientModul(this);
+                        if (newOcm.joined) {
+                            ocm = newOcm;
+                            sui.idBox.addItem(ocm.chatId);
+                            v.add(ocm);
+                            ocm.start();
+                        }
                     }
                 }
             } catch (IOException ie) {
@@ -170,6 +173,7 @@ class OneClientModul extends Thread {                                           
     DataOutputStream dos;
     String chatId;
     ServerUi sui;
+    boolean joined;
 
     OneClientModul(LiarServer ls) {
         this.ls = ls;
@@ -200,9 +204,13 @@ class OneClientModul extends Thread {                                           
                     dos.writeUTF("falseid");
                     System.out.println("falseid");
                     closeAll();
+                } else if (enterId.startsWith("gm")) {
+                    dos.writeUTF("falsename");
+                    closeAll();
                 } else {
                     System.out.println("주ㅡㅇ복아이디 없음");
                     dos.writeUTF("true");
+                    joined = true;
                 }
             }
         } catch (IOException ie) {
@@ -224,17 +232,15 @@ class OneClientModul extends Thread {                                           
                     if (msg != null) {
                         ls.liarTopic = msg.substring(9);
                     }
-                    System.out.println(ls.liarTopic);
                 } else if (msg.startsWith("cVote")) {
                     msg = msg.substring(5);
                     ls.voteList.add(msg);
-                    System.out.println("투표 : " + msg);
                     if (ls.voteList.size() == ls.v.size()) {
                         ls.gameThread.interrupt();
                     }
                 } else if (msg.equals("enterfalse")) {
                 } else {
-                    broadcast(msg);
+                    broadcast(chatId + ">> " + msg);
                 }
             }
         } catch (IOException ie) {
@@ -243,6 +249,14 @@ class OneClientModul extends Thread {                                           
             ls.sui.idBox.removeItem(chatId);
         } finally {
             closeAll();
+        }
+    }
+
+    void send(String msg) {
+        try {
+            dos.writeUTF(msg);
+            dos.flush();
+        } catch (IOException ie) {
         }
     }
 

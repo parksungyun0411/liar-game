@@ -62,6 +62,7 @@ class LiarServer extends Thread implements ActionListener {
                     DataOutputStream dos = new DataOutputStream(os);
                     if (v.size() == 8) {
                         dos.writeUTF("falsefull");
+                        s.close();
                     } else if (gameThread.isAlive() == true) {
                         dos.writeUTF("true");
                         dos.writeUTF("3초후");

@@ -105,8 +105,15 @@ public class GameManager {
         for (OneClientModul ocm : ls.v) {
             gm("list" + ocm.chatId);
         }
+        synchronized (ls) {
+            ls.voting = true;
+        }
         gm("vote");
         ls.sleepTh(20);
+        synchronized (ls) {
+            ls.voting = false;
+            Thread.interrupted(); // 마감 직전에 들어온 표의 interrupt 가 라이어 추리 대기를 끊지 않게 지운다
+        }
         System.out.println("쓰레드깸");
     }
 

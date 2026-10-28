@@ -1,7 +1,8 @@
 
 
 import java.io.File;
-import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 
 public class GameManager {
@@ -74,8 +75,8 @@ public class GameManager {
 
         File topicListFile = new File("주제.txt");
         try {
-            sc = new Scanner(topicListFile);
-        } catch (FileNotFoundException e) {
+            sc = new Scanner(topicListFile, StandardCharsets.UTF_8);
+        } catch (IOException e) {
             System.out.println("파일을 찾을 수 없습니다.");
         }
 

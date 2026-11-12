@@ -11,6 +11,7 @@
 - **팀**: 3인 (김호정 · 양승원 · 박성윤)
 - **본인(박성윤) 담당**: 서버 측 멀티스레드 처리와 게임 로직(`LiarServer.java`, `OneClientModul`, `GameManager.java`), 클라이언트 UI 조정, 한글 인코딩 정리, Gradle 빌드 설정
 - **기술**: Java, Swing, `Socket` / `ServerSocket`, `Thread` / `Vector`, Gradle
+- **기획 자료**: [제안서 발표자료](./docs/proposal.pptx)
 
 ## 게임 흐름
 
